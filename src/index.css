@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-white: #FFFFFF;
+  --color-black: #050505;
+  --color-blue: #2563EB;
+  --color-darkblue: #0B1F4D;
+  --color-pink: #EC4899;
+}
+
+/* Light Theme Base Body Styles */
+body {
+  margin: 0;
+  background-color: #FFFFFF;
+  color: #050505;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle clean scrollbar for light theme */
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #F8FAFC;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Accessible focus ring */
+.focus-visible-ring:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 3px;
+}
+
+/* Blinking typing cursor in brand blue on light background */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2.5px;
+  height: 1.15em;
+  background-color: #2563EB;
+  vertical-align: -0.15em;
+  margin-left: 3px;
+  animation: cursorBlink 0.9s infinite;
+}
+
+/* Subtle fade and slide up animation for continuous reveals */
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Certificate ceremonial frame for light modal */
+.certificate-frame {
+  background: #FFFFFF;
+  border: 8px solid #0B1F4D;
+  box-shadow: 
+    0 0 0 1px #2563EB,
+    0 20px 45px -10px rgba(11, 31, 77, 0.15);
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .typing-cursor {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
