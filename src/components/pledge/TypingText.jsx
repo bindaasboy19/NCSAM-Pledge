@@ -9,7 +9,7 @@ import { FastForward } from 'lucide-react';
  */
 export function TypingText({
   text = '',
-  speed = 10,
+  speed = 5,
   onComplete,
   skipEnabled = true,
 }) {
