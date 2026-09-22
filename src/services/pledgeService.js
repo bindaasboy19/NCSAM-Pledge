@@ -3,19 +3,10 @@
  * Pledge Service Adapter
  * ============================================================================
  * 
- * Translates between the UI state machine and the Spring Boot backend REST API.
- * 
- * Adapts endpoints configured in PLEDGE_CONFIG:
- * - submitParticipant: POST /api/pledge/participants
- * - getPledgeContent: GET /api/pledge/content (optional, falls back to config)
- * - generateCertificate: POST /api/pledge/generate-certificate
- * 
- * Note on Development Preview (Rule 70):
- * If the Spring Boot server is not running locally during development and
- * VITE_ENABLE_DEV_MOCK_FALLBACK is true, this service catches the connection
- * failure and provides an isolated preview response clearly marked as
- * isDevPreview: true, so developers and evaluators can preview the full flow
- * without pretending it is the real production backend.
+ * Communicates with the Java Spring Boot backend for:
+ * 1. getPledgeCount() -> GET /api/pledge/count (returns real count or null)
+ * 2. submitInitialData() -> POST /api/pledge/initial (title, name, language)
+ * 3. generateCertificate() -> POST /api/pledge/generate-certificate
  */
 
 import { apiClient } from '../api/client';
@@ -24,33 +15,49 @@ import { PLEDGE_CONFIG } from '../config/pledgeConfig';
 const ENABLE_DEV_FALLBACK = import.meta.env.VITE_ENABLE_DEV_MOCK_FALLBACK === 'true';
 
 /**
- * Register a participant with the Spring Boot backend.
+ * Fetch real pledge counter from Spring Boot backend.
+ * Returns null if endpoint does not exist or backend is unreachable (no fake numbers!).
  * 
- * @param {object} participantData { name, email, mobile, profession, city, organization }
- * @returns {Promise<{ participantId: string, name: string, email: string, isDevPreview?: boolean }>}
+ * @returns {Promise<number|null>}
  */
-export async function submitParticipant(participantData) {
+export async function getPledgeCount() {
   try {
-    const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.submitParticipant, {
-      method: 'POST',
-      body: participantData,
+    const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.pledgeCount, {
+      method: 'GET',
     });
+    if (response && typeof response.count === 'number') {
+      return response.count;
+    }
+    if (typeof response === 'number') {
+      return response;
+    }
+    return null;
+  } catch {
+    // If backend does not provide count or is offline, do NOT fabricate data
+    return null;
+  }
+}
 
+/**
+ * Submit initial participant registration (Title, Name, Language)
+ * 
+ * @param {object} initialData { title, name, language }
+ * @returns {Promise<{ participantId: string, isDevPreview?: boolean }>}
+ */
+export async function submitInitialData(initialData) {
+  try {
+    const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.submitInitial, {
+      method: 'POST',
+      body: initialData,
+    });
     return {
-      participantId: response.participantId || response.id || response.sessionId,
-      name: response.name || participantData.name,
-      email: response.email || participantData.email,
+      participantId: response?.participantId || response?.id || `PART-${Date.now()}`,
       isDevPreview: false,
     };
   } catch (error) {
-    // If backend is offline in development and fallback is enabled:
     if (ENABLE_DEV_FALLBACK && error.message?.includes('Unable to connect')) {
-      // Simulate network latency
-      await new Promise((r) => setTimeout(r, 650));
       return {
         participantId: `DEV-${Date.now().toString(36).toUpperCase()}`,
-        name: participantData.name,
-        email: participantData.email,
         isDevPreview: true,
       };
     }
@@ -59,37 +66,9 @@ export async function submitParticipant(participantData) {
 }
 
 /**
- * Fetch dynamic pledge content if supported by Spring Boot backend.
- * If backend does not implement this endpoint, falls back to centralized PLEDGE_CONFIG.
+ * Request certificate generation from Spring Boot backend.
  * 
- * @returns {Promise<{ pledgeText: string, acceptanceStatements: Array }>}
- */
-export async function getPledgeContent() {
-  try {
-    const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.getPledgeContent, {
-      method: 'GET',
-    });
-
-    if (response && response.pledgeText) {
-      return {
-        pledgeText: response.pledgeText,
-        acceptanceStatements: response.acceptanceStatements || PLEDGE_CONFIG.defaultAcceptanceStatements,
-      };
-    }
-  } catch {
-    // Graceful fallback to centralized config
-  }
-
-  return {
-    pledgeText: PLEDGE_CONFIG.defaultPledgeText,
-    acceptanceStatements: PLEDGE_CONFIG.defaultAcceptanceStatements,
-  };
-}
-
-/**
- * Request certificate generation from the Spring Boot backend.
- * 
- * @param {object} payload { participantId, acceptedStatementIds, participantName }
+ * @param {object} payload { title, name, language, email, mobile, profession, organization, certificateConsent, acceptedStatement }
  * @returns {Promise<{ certificateId: string, participantName: string, issueDate: string, emailSent: boolean, isDevPreview?: boolean }>}
  */
 export async function generateCertificate(payload) {
@@ -100,14 +79,13 @@ export async function generateCertificate(payload) {
     });
 
     return {
-      certificateId: response.certificateId || response.id || 'NCSAM-CERT-ONLINE',
-      participantName: response.participantName || payload.participantName,
+      certificateId: response.certificateId || response.id || 'NCSAM-CERT',
+      participantName: response.participantName || `${payload.title ? payload.title + ' ' : ''}${payload.name}`,
       issueDate: response.issueDate || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
       emailSent: Boolean(response.emailSent ?? response.emailDispatched ?? true),
       isDevPreview: false,
     };
   } catch (error) {
-    // If backend is offline in development and fallback is enabled:
     if (ENABLE_DEV_FALLBACK && error.message?.includes('Unable to connect')) {
       await new Promise((r) => setTimeout(r, 850));
       const formattedDate = new Date().toLocaleDateString('en-US', {
@@ -119,7 +97,7 @@ export async function generateCertificate(payload) {
 
       return {
         certificateId: devCertId,
-        participantName: payload.participantName,
+        participantName: `${payload.title ? payload.title + ' ' : ''}${payload.name}`,
         issueDate: formattedDate,
         emailSent: true,
         isDevPreview: true,
@@ -130,7 +108,7 @@ export async function generateCertificate(payload) {
 }
 
 export default {
-  submitParticipant,
-  getPledgeContent,
+  getPledgeCount,
+  submitInitialData,
   generateCertificate,
 };

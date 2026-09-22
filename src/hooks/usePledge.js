@@ -4,11 +4,11 @@
  * ============================================================================
  * 
  * Central state machine managing the 5-stage Cyber Safety Pledge journey:
- * 1. INTRO
- * 2. DETAILS
- * 3. PLEDGE (typing animation)
- * 4. ACCEPTANCE (commitment sequence)
- * 5. CERTIFICATE (ceremonial reveal modal)
+ * 1. INTRO (Landing page with prominent title, floating CTA, live counter)
+ * 2. INITIAL_SETUP (Step 1: Title, Name, Language)
+ * 3. PLEDGE_READING (Step 2: Slower typing 90ms, single acceptance checkbox, finish button)
+ * 4. DETAILS (Step 3: Email *, Phone *, Occupation, Organisation, Consent checkbox)
+ * 5. SUCCESS (Step 4: Success & Social Sharing screen - NO on-screen certificate)
  * 
  * Security & Privacy Rules:
  * - All personal data is held in React memory only.
@@ -16,176 +16,151 @@
  * - Duplicate submissions protected with strict loading flags.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { PLEDGE_CONFIG } from '../config/pledgeConfig';
+import { useState, useCallback } from 'react';
 import {
-  submitParticipant as apiSubmitParticipant,
-  getPledgeContent as apiGetPledgeContent,
+  submitInitialData as apiSubmitInitialData,
   generateCertificate as apiGenerateCertificate,
 } from '../services/pledgeService';
 
 export const PLEDGE_STAGES = {
   INTRO: 'INTRO',
+  INITIAL_SETUP: 'INITIAL_SETUP',
+  PLEDGE_READING: 'PLEDGE_READING',
   DETAILS: 'DETAILS',
-  PLEDGE: 'PLEDGE',
-  ACCEPTANCE: 'ACCEPTANCE',
-  CERTIFICATE: 'CERTIFICATE',
+  SUCCESS: 'SUCCESS',
 };
 
 export function usePledge() {
   const [stage, setStage] = useState(PLEDGE_STAGES.INTRO);
 
   // Participant details strictly kept in memory
-  const [participant, setParticipant] = useState(null);
+  const [participant, setParticipant] = useState({
+    title: 'Mr.',
+    name: '',
+    language: 'en',
+    email: '',
+    mobile: '',
+    profession: '',
+    organization: '',
+    certificateConsent: true,
+  });
   const [participantId, setParticipantId] = useState(null);
 
-  // Dynamic or configured pledge text and statements
-  const [pledgeText, setPledgeText] = useState(PLEDGE_CONFIG.defaultPledgeText);
-  const [acceptanceStatements, setAcceptanceStatements] = useState(
-    PLEDGE_CONFIG.defaultAcceptanceStatements
-  );
-
-  // Reading & acceptance state
-  const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const [acceptedStatements, setAcceptedStatements] = useState([]);
-
-  // Certificate state
-  const [certificateData, setCertificateData] = useState(null);
-  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
+  // Success & email dispatch state
+  const [emailSent, setEmailSent] = useState(false);
 
   // Status & loaders
   const [isSubmittingDetails, setIsSubmittingDetails] = useState(false);
-  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
+  const [isCompletingPledge, setIsCompletingPledge] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isDevPreview, setIsDevPreview] = useState(false);
 
-  // Pre-load dynamic pledge content if available on mount
-  useEffect(() => {
-    let isMounted = true;
-    apiGetPledgeContent()
-      .then((data) => {
-        if (isMounted && data) {
-          if (data.pledgeText) setPledgeText(data.pledgeText);
-          if (data.acceptanceStatements?.length) {
-            setAcceptanceStatements(data.acceptanceStatements);
-          }
-        }
-      })
-      .catch(() => {
-        // Fallbacks already configured in state
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   /**
-   * Transition from Hero to Details
+   * Transition from Landing Hero to Step 1: Initial Setup
    */
   const startPledge = useCallback(() => {
     setErrorMessage(null);
-    setStage(PLEDGE_STAGES.DETAILS);
+    setStage(PLEDGE_STAGES.INITIAL_SETUP);
   }, []);
 
   /**
-   * Submit participant details to Spring Boot backend
+   * Handle Step 1: Initial Setup submission (Title, Official Name, Language)
    */
-  const submitDetails = useCallback(async (formData) => {
-    setIsSubmittingDetails(true);
+  const handleInitialSetup = useCallback(async (initialData) => {
     setErrorMessage(null);
+    setIsSubmittingDetails(true);
 
     try {
-      const result = await apiSubmitParticipant(formData);
-      setParticipant(formData);
-      setParticipantId(result.participantId);
-      if (result.isDevPreview) {
-        setIsDevPreview(true);
+      setParticipant((prev) => ({
+        ...prev,
+        title: initialData.title,
+        name: initialData.name,
+        language: initialData.language,
+      }));
+
+      // Non-blocking backend registration if backend is available
+      try {
+        const result = await apiSubmitInitialData(initialData);
+        if (result?.participantId) {
+          setParticipantId(result.participantId);
+        }
+        if (result?.isDevPreview) {
+          setIsDevPreview(true);
+        }
+      } catch {
+        // Continue gracefully even if initial registration is offline
       }
-      setStage(PLEDGE_STAGES.PLEDGE);
+
+      setStage(PLEDGE_STAGES.PLEDGE_READING);
     } catch (err) {
-      setErrorMessage(err.message || 'Unable to save participant details. Please try again.');
+      setErrorMessage(err.message || 'Unable to proceed with pledge. Please try again.');
     } finally {
       setIsSubmittingDetails(false);
     }
   }, []);
 
   /**
-   * Invoked when typing animation finishes or user clicks "Skip animation"
+   * Transition from Step 2: Pledge Acceptance to Step 3: Personal Details
    */
-  const handleTypingFinished = useCallback(() => {
-    setIsTypingComplete(true);
-    setStage(PLEDGE_STAGES.ACCEPTANCE);
+  const finishPledgeReading = useCallback(() => {
+    setErrorMessage(null);
+    setStage(PLEDGE_STAGES.DETAILS);
   }, []);
 
   /**
-   * Toggle a specific acceptance statement
+   * Handle Step 3: Personal Details submission & backend pledge completion
    */
-  const toggleStatement = useCallback((statementId) => {
-    setAcceptedStatements((prev) => {
-      if (prev.includes(statementId)) {
-        return prev.filter((id) => id !== statementId);
-      } else {
-        return [...prev, statementId];
-      }
-    });
-  }, []);
-
-  /**
-   * Are all required acceptance statements checked?
-   */
-  const isFullyAccepted =
-    acceptanceStatements.length > 0 &&
-    acceptanceStatements.every((stmt) => acceptedStatements.includes(stmt.id));
-
-  /**
-   * Submit certificate generation request to Spring Boot backend
-   */
-  const requestCertificate = useCallback(async () => {
-    if (!isFullyAccepted || isGeneratingCertificate) return;
-
-    setIsGeneratingCertificate(true);
+  const handleCompletePledge = useCallback(async (fullData) => {
+    setIsCompletingPledge(true);
     setErrorMessage(null);
 
     try {
       const payload = {
-        participantId: participantId || 'NCSAM-PARTICIPANT',
-        participantName: participant?.name || 'Committed Citizen',
-        acceptedStatementIds: acceptedStatements,
+        participantId: participantId || `NCSAM-${Date.now()}`,
+        title: fullData.title || participant.title,
+        name: fullData.name || participant.name,
+        language: fullData.language || participant.language,
+        email: fullData.email,
+        mobile: fullData.mobile,
+        profession: fullData.profession,
+        organization: fullData.organization,
+        certificateConsent: Boolean(fullData.certificateConsent ?? fullData.receiveCertificate),
+        receiveCertificate: Boolean(fullData.certificateConsent ?? fullData.receiveCertificate),
       };
 
-      const certResponse = await apiGenerateCertificate(payload);
-      setCertificateData(certResponse);
-      if (certResponse.isDevPreview) {
+      setParticipant((prev) => ({ ...prev, ...fullData }));
+
+      const response = await apiGenerateCertificate(payload);
+      if (response?.isDevPreview) {
         setIsDevPreview(true);
       }
-      setIsCertificateModalOpen(true);
-      setStage(PLEDGE_STAGES.CERTIFICATE);
+      setEmailSent(Boolean(response?.emailSent));
+      setStage(PLEDGE_STAGES.SUCCESS);
     } catch (err) {
       setErrorMessage(
-        err.message || 'Could not generate your certificate at this moment. Please try again.'
+        err.message || 'Could not complete your pledge at this moment. Please try again.'
       );
     } finally {
-      setIsGeneratingCertificate(false);
+      setIsCompletingPledge(false);
     }
-  }, [isFullyAccepted, isGeneratingCertificate, participantId, participant, acceptedStatements]);
-
-  /**
-   * Close certificate modal
-   */
-  const closeCertificateModal = useCallback(() => {
-    setIsCertificateModalOpen(false);
-  }, []);
+  }, [participant, participantId]);
 
   /**
    * Restart flow gracefully without persisting sensitive data
    */
   const restartFlow = useCallback(() => {
-    setParticipant(null);
+    setParticipant({
+      title: 'Mr.',
+      name: '',
+      language: 'en',
+      email: '',
+      mobile: '',
+      profession: '',
+      organization: '',
+      certificateConsent: true,
+    });
     setParticipantId(null);
-    setAcceptedStatements([]);
-    setIsTypingComplete(false);
-    setCertificateData(null);
-    setIsCertificateModalOpen(false);
+    setEmailSent(false);
     setErrorMessage(null);
     setStage(PLEDGE_STAGES.INTRO);
   }, []);
@@ -194,23 +169,15 @@ export function usePledge() {
     stage,
     participant,
     participantId,
-    pledgeText,
-    acceptanceStatements,
-    isTypingComplete,
-    acceptedStatements,
-    isFullyAccepted,
-    certificateData,
-    isCertificateModalOpen,
+    emailSent,
     isSubmittingDetails,
-    isGeneratingCertificate,
+    isCompletingPledge,
     errorMessage,
     isDevPreview,
     startPledge,
-    submitDetails,
-    handleTypingFinished,
-    toggleStatement,
-    requestCertificate,
-    closeCertificateModal,
+    handleInitialSetup,
+    finishPledgeReading,
+    handleCompletePledge,
     restartFlow,
     clearError: () => setErrorMessage(null),
   };
