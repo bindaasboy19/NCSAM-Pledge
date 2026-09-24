@@ -1,22 +1,19 @@
 /**
  * ============================================================================
- * Pledge Service Adapter
+ * Pledge Service Adapter — Real Spring Boot Integration
  * ============================================================================
  * 
- * Communicates with the Java Spring Boot backend for:
- * 1. getPledgeCount() -> GET /api/pledge/count (returns real count or null)
- * 2. submitInitialData() -> POST /api/pledge/initial (title, name, language)
- * 3. generateCertificate() -> POST /api/pledge/generate-certificate
+ * Communicates with the real deployed Java Spring Boot backend for:
+ * 1. getPledgeCount()  -> GET /api/pledges/count (returns real count or null)
+ * 2. submitPledge()    -> POST /api/pledges (commits pledge & requests certificate dispatch)
  */
 
 import { apiClient } from '../api/client';
 import { PLEDGE_CONFIG } from '../config/pledgeConfig';
 
-const ENABLE_DEV_FALLBACK = import.meta.env.VITE_ENABLE_DEV_MOCK_FALLBACK === 'true';
-
 /**
- * Fetch real pledge counter from Spring Boot backend.
- * Returns null if endpoint does not exist or backend is unreachable (no fake numbers!).
+ * Fetch real live pledge counter from Spring Boot backend.
+ * Endpoint: GET /api/pledges/count
  * 
  * @returns {Promise<number|null>}
  */
@@ -33,82 +30,84 @@ export async function getPledgeCount() {
     }
     return null;
   } catch {
-    // If backend does not provide count or is offline, do NOT fabricate data
+    // If backend is unreachable or count is offline, do NOT fabricate data
     return null;
   }
 }
 
 /**
- * Submit initial participant registration (Title, Name, Language)
+ * Stage 1 local registration adapter.
+ * The Spring Boot backend commits participant data atomically in Stage 3.
  * 
  * @param {object} initialData { title, name, language }
- * @returns {Promise<{ participantId: string, isDevPreview?: boolean }>}
+ * @returns {Promise<{ participantId: string, isDevPreview: boolean }>}
  */
-export async function submitInitialData(initialData) {
-  try {
-    const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.submitInitial, {
-      method: 'POST',
-      body: initialData,
-    });
-    return {
-      participantId: response?.participantId || response?.id || `PART-${Date.now()}`,
-      isDevPreview: false,
-    };
-  } catch (error) {
-    if (ENABLE_DEV_FALLBACK && error.message?.includes('Unable to connect')) {
-      return {
-        participantId: `DEV-${Date.now().toString(36).toUpperCase()}`,
-        isDevPreview: true,
-      };
-    }
-    throw error;
-  }
+export async function submitInitialData() {
+  return {
+    participantId: `PART-${Date.now()}`,
+    isDevPreview: false,
+  };
 }
 
 /**
- * Request certificate generation from Spring Boot backend.
+ * Submit complete pledge commitment to the real Spring Boot backend.
+ * Endpoint: POST /api/pledges
  * 
- * @param {object} payload { title, name, language, email, mobile, profession, organization, certificateConsent, acceptedStatement }
- * @returns {Promise<{ certificateId: string, participantName: string, issueDate: string, emailSent: boolean, isDevPreview?: boolean }>}
+ * Backend Contract:
+ * - title: string
+ * - name: string (required)
+ * - language: string
+ * - email: string (required, unique)
+ * - phone: string (required)
+ * - profession: string (optional)
+ * - organization: string (optional)
+ * - certificateConsent: boolean (required: true for pledge commitment)
+ * - receiveCertificate: boolean (controls certificate dispatch)
+ * 
+ * @param {object} payload
+ * @returns {Promise<{ success: boolean, message: string, emailSent: boolean, isDevPreview: boolean }>}
  */
-export async function generateCertificate(payload) {
-  try {
-    const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.generateCertificate, {
-      method: 'POST',
-      body: payload,
-    });
+export async function submitPledge(payload) {
+  const wantsCertificate = Boolean(payload.certificateConsent ?? payload.receiveCertificate);
 
-    return {
-      certificateId: response.certificateId || response.id || 'NCSAM-CERT',
-      participantName: response.participantName || `${payload.title ? payload.title + ' ' : ''}${payload.name}`,
-      issueDate: response.issueDate || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      emailSent: Boolean(response.emailSent ?? response.emailDispatched ?? true),
-      isDevPreview: false,
-    };
-  } catch (error) {
-    if (ENABLE_DEV_FALLBACK && error.message?.includes('Unable to connect')) {
-      await new Promise((r) => setTimeout(r, 850));
-      const formattedDate = new Date().toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-      const devCertId = `CSP-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+  // Extract 10-digit phone number as required by Spring Boot backend contract
+  const rawPhone = (payload.phone || payload.mobile || '').replace(/\D/g, '');
+  const cleanPhone = rawPhone.length > 10 ? rawPhone.slice(-10) : rawPhone;
 
-      return {
-        certificateId: devCertId,
-        participantName: `${payload.title ? payload.title + ' ' : ''}${payload.name}`,
-        issueDate: formattedDate,
-        emailSent: true,
-        isDevPreview: true,
-      };
-    }
-    throw error;
-  }
+  const requestBody = {
+    title: payload.title || 'Mr.',
+    name: payload.name?.trim(),
+    language: payload.language || 'en',
+    email: payload.email?.trim(),
+    phone: cleanPhone,
+    profession: payload.profession?.trim() || '',
+    organization: payload.organization?.trim() || '',
+    certificateConsent: true,
+    receiveCertificate: wantsCertificate,
+  };
+
+  const response = await apiClient(PLEDGE_CONFIG.apiEndpoints.submitPledge, {
+    method: 'POST',
+    body: requestBody,
+  });
+
+  const message = response?.message || '';
+  const emailConfirmed = message.toLowerCase().includes('emailed') || message.toLowerCase().includes('certificate');
+
+  return {
+    success: true,
+    message,
+    emailSent: wantsCertificate && emailConfirmed,
+    isDevPreview: false,
+  };
 }
+
+// Backward compatible export for usePledge hook
+export const generateCertificate = submitPledge;
 
 export default {
   getPledgeCount,
   submitInitialData,
+  submitPledge,
   generateCertificate,
 };

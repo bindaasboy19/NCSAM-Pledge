@@ -51,10 +51,11 @@ export function ParticipantForm({
     }
 
     if (field === 'mobile') {
+      const digits = (trimmed || '').replace(/\D/g, '');
       if (!trimmed) {
         error = 'Phone number is required';
-      } else if (!/^\+?[0-9\s\-()]{8,15}$/.test(trimmed)) {
-        error = 'Please enter a valid phone number';
+      } else if (digits.length < 10) {
+        error = 'Please enter a valid 10-digit phone number';
       }
     }
 
@@ -118,11 +119,11 @@ export function ParticipantForm({
     });
   };
 
+  const mobileDigits = formData.mobile.replace(/\D/g, '');
   const isFormValid =
     formData.email.trim() &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()) &&
-    formData.mobile.trim() &&
-    /^\+?[0-9\s\-()]{8,15}$/.test(formData.mobile.trim());
+    mobileDigits.length >= 10;
 
   return (
     <section
@@ -242,7 +243,7 @@ export function ParticipantForm({
                 disabled={isSubmitting}
                 aria-invalid={Boolean(touched.mobile && errors.mobile)}
                 aria-describedby={touched.mobile && errors.mobile ? 'mobile-error' : undefined}
-                placeholder="e.g. +91 9876543210"
+                placeholder="e.g. 9876543210"
                 className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-xl text-[#050505] text-sm placeholder-slate-400 focus:outline-none focus:ring-4 transition-all ${
                   touched.mobile && errors.mobile
                     ? 'border-red-500 focus:ring-red-100'

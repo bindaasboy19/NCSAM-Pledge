@@ -144,9 +144,8 @@ export const PLEDGE_CONFIG = {
 
   // API Endpoint Routes
   apiEndpoints: {
-    pledgeCount: "/api/pledge/count",
-    submitInitial: "/api/pledge/initial",
-    generateCertificate: "/api/pledge/generate-certificate",
+    pledgeCount: "/api/pledges/count",
+    submitPledge: "/api/pledges",
   },
 
   // Verified Footer Links
@@ -158,7 +157,7 @@ export const PLEDGE_CONFIG = {
 
   // Network & Request Defaults
   network: {
-    timeoutMs: 15000,
+    timeoutMs: 180000,
   },
 
   loadingMessages: {

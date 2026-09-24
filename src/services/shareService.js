@@ -33,13 +33,9 @@ export function buildPledgeUrl() {
     if (!isLocal) {
       return origin;
     }
-    // Allow localhost in local development if explicitly running in DEV
-    if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
-      return origin;
-    }
   }
 
-  return 'https://pledge.ncsam.in';
+  return 'https://ncsam-pledge.vercel.app';
 }
 
 /**

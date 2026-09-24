@@ -14,8 +14,19 @@
 
 import { PLEDGE_CONFIG } from '../config/pledgeConfig';
 
-// Resolve base URL from environment or default to localhost:8080
-const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '::1');
+
+// When running on localhost (dev or preview), route through Vite proxy ('') to satisfy
+// Spring Boot backend CORS policy which strictly whitelists https://ncsam-pledge.vercel.app.
+// In deployed production, use configured VITE_API_BASE_URL or fallback to backend domain.
+const RAW_BASE_URL = isLocalhost
+  ? (import.meta.env.VITE_DEV_API_BASE_URL ?? '')
+  : (import.meta.env.VITE_API_BASE_URL || 'https://cyber-awareness-backend.onrender.com');
+
 // Strip trailing slashes
 const API_BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
 
@@ -76,7 +87,7 @@ export async function apiClient(endpoint, options = {}) {
     method = 'GET',
     body,
     headers = {},
-    timeoutMs = PLEDGE_CONFIG.network.timeoutMs,
+    timeoutMs = PLEDGE_CONFIG.network?.timeoutMs || 180000,
   } = options;
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
@@ -101,10 +112,20 @@ export async function apiClient(endpoint, options = {}) {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      // Create normalized error object without logging sensitive payload
-      const safeMessage = normalizeApiError(response);
+      let backendError = null;
+      try {
+        const errorJson = await response.json();
+        if (errorJson && typeof errorJson.message === 'string' && errorJson.message.trim()) {
+          backendError = errorJson.message.trim();
+        }
+      } catch {
+        // Response was not JSON
+      }
+
+      const safeMessage = backendError || normalizeApiError(response);
       const error = new Error(safeMessage);
       error.status = response.status;
+      error.backendMessage = backendError;
       throw error;
     }
 
@@ -125,6 +146,8 @@ export async function apiClient(endpoint, options = {}) {
 
     const safeMessage = normalizeApiError(err);
     const error = new Error(safeMessage);
+    error.cause = err;
+    error.originalMessage = err?.message;
     throw error;
   }
 }
