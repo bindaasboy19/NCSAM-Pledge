@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-white: #FFFFFF;
+  --color-black: #050505;
+  --color-blue: #2563EB;
+  --color-darkblue: #0B1F4D;
+  --color-pink: #EC4899;
+}
+
+/* Base Body Styles */
+body {
+  margin: 0;
+  background-color: #FFFFFF;
+  color: #050505;
+  font-family: 'Inter', 'Manrope', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Hierarchy Classes */
+.font-heading {
+  font-family: 'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: 'Inter', 'Manrope', system-ui, sans-serif;
+}
+
+.font-hindi {
+  font-family: 'Noto Sans Devanagari', 'Noto Sans', system-ui, sans-serif;
+}
+
+/* Subtle clean scrollbar for light theme */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F8FAFC;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Accessible focus ring */
+.focus-visible-ring:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 3px;
+}
+
+/* Blinking typing cursor in brand blue */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2.5px;
+  height: 1.15em;
+  background-color: #2563EB;
+  vertical-align: -0.15em;
+  margin-left: 3px;
+  animation: cursorBlink 0.9s infinite;
+}
+
+/* Subtle fade and slide up animation */
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Gentle floating animation for Take The Pledge CTA (4.5s loop) */
+@keyframes floatCTA {
+  0%, 100% {
+    transform: translateY(0px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
+  }
+  50% {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.32);
+  }
+}
+
+.animate-floating-cta {
+  animation: floatCTA 4.5s ease-in-out infinite;
+}
+
+/* Subtle alive animations for cybersecurity side graphics (6–10s slow loop) */
+@keyframes pulseNodeSlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.65;
+  }
+}
+
+.animate-node-pulse {
+  animation: pulseNodeSlow 7s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pathwaySlow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 40;
+  }
+}
+
+.animate-pathway {
+  animation: pathwaySlow 12s linear infinite;
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .typing-cursor,
+  .animate-floating-cta,
+  .animate-node-pulse,
+  .animate-pathway {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
