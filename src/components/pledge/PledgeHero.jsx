@@ -45,7 +45,7 @@ export function PledgeHero({ onStart }) {
             loop
             playsInline
             preload="metadata"
-            className="absolute inset-0 w-full h-full object-cover z-0 filter brightness-[0.5] contrast-[1.05]"
+            className="absolute inset-0 w-full h-full object-cover z-0 filter brightness-[1] contrast-[1.05]"
           >
             <source src="/Video.mp4" type="video/mp4" />
             <source src="/video.mp4" type="video/mp4" />
