@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, ExternalLink } from 'lucide-react';
 import { PLEDGE_CONFIG } from '../../config/pledgeConfig';
+import { isAdminAuthenticated } from '../../services/adminService';
 
 /**
  * Editorial light-theme campaign footer.
@@ -64,7 +65,14 @@ export function Footer({ onNavigate }) {
           <span className="text-slate-300" aria-hidden="true">•</span>
           <button
             type="button"
-            onClick={() => onNavigate ? onNavigate('/admin') : (window.location.pathname = '/admin')}
+            onClick={() => {
+              const target = isAdminAuthenticated() ? '/admin' : '/admin/login';
+              if (onNavigate) {
+                onNavigate(target);
+              } else {
+                window.location.pathname = target;
+              }
+            }}
             className="hover:text-[#2563EB] transition-colors inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
             title="Administrator Portal"
           >

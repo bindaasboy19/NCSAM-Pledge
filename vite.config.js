@@ -13,7 +13,7 @@ export default defineConfig({
         timeout: 240000,
         proxyTimeout: 240000,
         headers: {
-          Origin: 'https://ncsam-pledge.vercel.app',
+          Origin: 'https://pledge.ncsam.in',
         },
       },
     },
@@ -27,7 +27,7 @@ export default defineConfig({
         timeout: 240000,
         proxyTimeout: 240000,
         headers: {
-          Origin: 'https://ncsam-pledge.vercel.app',
+          Origin: 'https://pledge.ncsam.in',
         },
       },
     },

@@ -166,7 +166,10 @@ export function AdminDashboardPage({ onNavigate }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#050505] flex flex-col selection:bg-[#2563EB] selection:text-white">
       {/* Top Admin Header */}
-      <AdminHeader onNavigate={onNavigate} />
+      <AdminHeader
+        onNavigate={onNavigate}
+        onLogout={() => onNavigate && onNavigate('/admin/login')}
+      />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {/* Page Title & Refresh */}
@@ -410,10 +413,10 @@ export function AdminDashboardPage({ onNavigate }) {
                   pledges.map((p) => {
                     const recDate = p.createdAt
                       ? new Date(p.createdAt).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })
                       : 'N/A';
 
                     return (

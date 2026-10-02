@@ -39,6 +39,13 @@ export function App() {
     }
   }, []);
 
+  // Redirect unauthenticated access to /admin directly to /admin/login
+  useEffect(() => {
+    if (currentPath.startsWith('/admin') && currentPath !== '/admin/login' && !isAdminAuthenticated()) {
+      navigate('/admin/login');
+    }
+  }, [currentPath, navigate]);
+
   // Route Dispatcher
   if (currentPath === '/admin/login') {
     return (

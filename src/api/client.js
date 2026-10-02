@@ -101,11 +101,25 @@ export async function apiClient(endpoint, options = {}) {
     ...headers,
   };
 
+  // Automatically attach Admin Bearer token for protected admin endpoints if available
+  if (endpoint.startsWith('/api/admin') && !endpoint.includes('/login') && !requestHeaders['Authorization']) {
+    try {
+      const raw = typeof window !== 'undefined' ? sessionStorage.getItem('ncsam_admin_auth') : null;
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.token && typeof parsed.token === 'string' && parsed.token.trim()) {
+        requestHeaders['Authorization'] = `Bearer ${parsed.token.trim()}`;
+      }
+    } catch {
+      // Ignore sessionStorage parsing errors
+    }
+  }
+
   try {
     const response = await fetch(url, {
       method,
       headers: requestHeaders,
       body: body ? JSON.stringify(body) : undefined,
+      credentials: options.credentials || 'include',
       signal: controller.signal,
     });
 
