@@ -1,0 +1,314 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  X,
+  User,
+  Mail,
+  Phone,
+  Briefcase,
+  Building,
+  Award,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Copy,
+  Check,
+  Download,
+} from 'lucide-react';
+import { downloadCertificate } from '../../utils/CertificateGenerator';
+
+/**
+ * UserDetailsModal: Secure, read-only inspector for submitted pledge records.
+ * 
+ * Strict Read-Only Policy:
+ * - Displays all 11 core participant & submission attributes
+ * - Zero editing, deletion, or record manipulation controls
+ * - Quick copy helpers for email, phone, and certificate ID
+ * - Instant certificate generation & preview for authorized administrative review
+ */
+export function UserDetailsModal({ isOpen, onClose, pledge }) {
+  const modalRef = useRef(null);
+  const [copiedField, setCopiedField] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !pledge) return null;
+
+  const copyToClipboard = (text, fieldName) => {
+    if (!text) return;
+    navigator.clipboard?.writeText(String(text));
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleDownloadCert = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    await downloadCertificate({
+      title: pledge.title,
+      name: pledge.name,
+      pledgeNumber: pledge.pledgeNumber,
+      certificateId: pledge.certificateId,
+      date: pledge.createdAt,
+      language: pledge.language,
+    });
+    setIsDownloading(false);
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'sent':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            Sent / Dispatched
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            Queued / Pending
+          </span>
+        );
+      case 'failed':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+            Dispatch Failed
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+            Not Requested
+          </span>
+        );
+    }
+  };
+
+  const formattedDate = pledge.createdAt
+    ? new Date(pledge.createdAt).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'N/A';
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-sm transition-opacity"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="user-details-title"
+      ref={modalRef}
+      onClick={(e) => {
+        if (e.target === modalRef.current) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 sm:p-8 animate-fade-slide-up text-left">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2563EB]">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <h2
+                id="user-details-title"
+                className="font-heading text-lg sm:text-xl font-bold text-[#0B1F4D]"
+              >
+                Participant Submission Record
+              </h2>
+              <p className="text-xs text-slate-500 font-mono">
+                Pledge #{pledge.pledgeNumber} • {pledge.certificateId || 'ID Pending'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible-ring"
+            aria-label="Close dialog"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Read-Only Status Banner */}
+        <div className="my-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 font-medium">Certificate Delivery Status:</span>
+            {getStatusBadge(pledge.certificateStatus)}
+          </div>
+          <div className="text-slate-500">
+            Language: <span className="font-semibold text-slate-800 uppercase">{pledge.language || 'en'}</span>
+          </div>
+        </div>
+
+        {/* Core Attributes Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
+          {/* Full Name */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Official Name & Salutation
+            </span>
+            <span className="text-sm font-bold text-[#0B1F4D]">
+              {pledge.title ? `${pledge.title} ` : ''}{pledge.name}
+            </span>
+          </div>
+
+          {/* Email Address */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Email Address
+              </span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(pledge.email, 'email')}
+                className="text-slate-400 hover:text-[#2563EB] transition-colors p-0.5"
+                title="Copy email address"
+              >
+                {copiedField === 'email' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{pledge.email || 'N/A'}</span>
+            </div>
+          </div>
+
+          {/* Phone Number */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Phone Number
+              </span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(pledge.phone, 'phone')}
+                className="text-slate-400 hover:text-[#2563EB] transition-colors p-0.5"
+                title="Copy phone number"
+              >
+                {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>{pledge.phone || 'N/A'}</span>
+            </div>
+          </div>
+
+          {/* Certificate Preference */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Requested Certificate
+            </span>
+            <span className="text-sm font-semibold text-slate-800">
+              {pledge.receiveCertificate || pledge.certificateConsent ? 'Yes (Requested)' : 'No'}
+            </span>
+          </div>
+
+          {/* Profession / Occupation */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Profession / Occupation
+            </span>
+            <div className="flex items-center gap-1.5 text-sm text-slate-700">
+              <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>{pledge.profession || 'Not Specified'}</span>
+            </div>
+          </div>
+
+          {/* Organization */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Organisation / Institution
+            </span>
+            <div className="flex items-center gap-1.5 text-sm text-slate-700">
+              <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>{pledge.organization || 'Not Specified'}</span>
+            </div>
+          </div>
+
+          {/* Certificate Identifier */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Official Certificate ID
+              </span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(pledge.certificateId, 'certId')}
+                className="text-slate-400 hover:text-[#2563EB] transition-colors p-0.5"
+                title="Copy certificate ID"
+              >
+                {copiedField === 'certId' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#2563EB]">
+              <Award className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+              <span>{pledge.certificateId || 'NF/CSP/PENDING'}</span>
+            </div>
+          </div>
+
+          {/* Submission Timestamp */}
+          <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Recorded At
+            </span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>{formattedDate}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions: Download certificate copy for verification or Close */}
+        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handleDownloadCert}
+            disabled={isDownloading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#0B1F4D] text-xs font-semibold transition-colors focus-visible-ring"
+          >
+            <Download className="w-3.5 h-3.5 text-[#2563EB]" />
+            <span>{isDownloading ? 'Generating...' : 'Export Verified Certificate'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus-visible-ring"
+          >
+            Close Inspector
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default UserDetailsModal;

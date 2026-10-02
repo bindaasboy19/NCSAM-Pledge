@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ShieldCheck,
-  MailCheck,
   Share2,
   MessageCircle,
   Copy,
@@ -11,6 +10,7 @@ import {
   AlertCircle,
   FileText,
 } from 'lucide-react';
+import { CertificateCard } from './CertificateCard';
 import { PLEDGE_CONFIG } from '../../config/pledgeConfig';
 import { generateShareCardFile } from '../../utils/ShareCardGenerator';
 import {
@@ -38,6 +38,7 @@ import {
 export function PledgeSuccess({
   participant,
   pledgeNumber,
+  certificateId,
   emailSent,
   onRestart,
 }) {
@@ -141,8 +142,6 @@ export function PledgeSuccess({
     }
   };
 
-  const certificateRequestedAndConfirmed = Boolean(participant?.certificateConsent) && emailSent;
-
   return (
     <section
       className={`max-w-xl mx-auto px-4 py-2 sm:py-4 animate-fade-slide-up ${isHindi ? 'font-hindi' : 'font-body'}`}
@@ -184,15 +183,13 @@ export function PledgeSuccess({
           </div>
         )}
 
-        {/* Email Dispatched Note (ONLY if certificate was requested AND backend confirmed it) */}
-        {certificateRequestedAndConfirmed && (
-          <div className="mb-4 p-2.5 rounded-xl bg-blue-50/80 border border-blue-200 flex items-center justify-center gap-2 text-slate-700 max-w-md mx-auto">
-            <MailCheck className="w-4 h-4 text-[#2563EB] shrink-0" aria-hidden="true" />
-            <p className="font-heading text-xs font-semibold text-[#0B1F4D] text-left">
-              {langContent.certEmailedNotice}
-            </p>
-          </div>
-        )}
+        {/* Instant Certificate Card with HD Canvas Preview and 1-Click Download */}
+        <CertificateCard
+          participant={participant}
+          pledgeNumber={pledgeNumber}
+          certificateId={certificateId}
+          emailSent={emailSent}
+        />
 
         {/* ============================================================ */}
         {/* COMPACT CAMPAIGN SHARE GRAPHIC PREVIEW (Not a download card) */}

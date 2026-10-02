@@ -10,7 +10,7 @@ import { PLEDGE_CONFIG } from '../../config/pledgeConfig';
  * - Provided logo.png
  * - Verified links to Privacy Policy, Terms & Conditions, and Contact/Support
  */
-export function Footer() {
+export function Footer({ onNavigate }) {
   const currentYear = new Date().getFullYear();
   const { footerLinks, campaign } = PLEDGE_CONFIG;
 
@@ -61,6 +61,15 @@ export function Footer() {
             <span>Contact & Support</span>
             <ExternalLink className="w-3 h-3 text-slate-400" />
           </a>
+          <span className="text-slate-300" aria-hidden="true">•</span>
+          <button
+            type="button"
+            onClick={() => onNavigate ? onNavigate('/admin') : (window.location.pathname = '/admin')}
+            className="hover:text-[#2563EB] transition-colors inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+            title="Administrator Portal"
+          >
+            <span>Admin Portal</span>
+          </button>
         </div>
 
         {/* Campaign dedication */}

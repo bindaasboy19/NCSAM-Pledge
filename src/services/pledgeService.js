@@ -91,15 +91,21 @@ export async function submitPledge(payload) {
     body: requestBody,
   });
 
-  const message = response?.message || '';
-  const emailConfirmed = message.toLowerCase().includes('emailed') || message.toLowerCase().includes('certificate');
+  const pledgeNum = response?.pledgeNumber || (typeof response?.id === 'number' ? response.id : null);
+  const certYear = new Date().getFullYear().toString().slice(-2);
+  const derivedCertId = response?.certificateId || response?.certificateNumber || (pledgeNum ? `NF/CSP/${certYear}${String(pledgeNum).padStart(6, '0')}` : null);
 
   return {
     success: true,
     message,
-    pledgeNumber: response?.pledgeNumber,
-    certificateNumber: response?.certificateNumber,
-    emailSent: wantsCertificate && (emailConfirmed || Boolean(response?.certificateNumber || response?.pledgeNumber)),
+    pledgeNumber: pledgeNum,
+    certificateNumber: response?.certificateNumber || derivedCertId,
+    certificateId: derivedCertId,
+    officialName: response?.officialName || response?.name || payload.name?.trim(),
+    title: response?.title || payload.title || 'Mr.',
+    date: response?.date || response?.createdAt || new Date().toISOString(),
+    certificateAvailable: true,
+    emailSent: wantsCertificate && (emailConfirmed || Boolean(response?.certificateNumber || pledgeNum)),
     isDevPreview: false,
   };
 }

@@ -49,6 +49,7 @@ export function usePledge() {
   // Success & email dispatch state
   const [emailSent, setEmailSent] = useState(false);
   const [pledgeNumber, setPledgeNumber] = useState(null);
+  const [certificateId, setCertificateId] = useState(null);
 
   // Status & loaders
   const [isSubmittingDetails, setIsSubmittingDetails] = useState(false);
@@ -149,6 +150,9 @@ export function usePledge() {
       if (response?.pledgeNumber) {
         setPledgeNumber(response.pledgeNumber);
       }
+      if (response?.certificateId) {
+        setCertificateId(response.certificateId);
+      }
       setEmailSent(Boolean(response?.emailSent));
       // Clear submissionId on success so future submissions generate a fresh ID
       submissionIdRef.current = null;
@@ -181,6 +185,7 @@ export function usePledge() {
     });
     setParticipantId(null);
     setPledgeNumber(null);
+    setCertificateId(null);
     setEmailSent(false);
     setErrorMessage(null);
     setErrorCode(null);
@@ -228,6 +233,7 @@ export function usePledge() {
     participant,
     participantId,
     pledgeNumber,
+    certificateId,
     emailSent,
     isSubmittingDetails,
     isCompletingPledge,

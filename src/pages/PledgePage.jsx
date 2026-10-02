@@ -21,11 +21,12 @@ import { ErrorBoundary } from '../components/common/ErrorBoundary';
  * 4. DETAILS (Step 3: Personal Details Form - Email, Phone, Optional Fields, Consent)
  * 5. SUCCESS (Step 4: Dedicated Success & Social Sharing screen - NO on-screen certificate)
  */
-export function PledgePage() {
+export function PledgePage({ onNavigate }) {
   const {
     stage,
     participant,
     pledgeNumber,
+    certificateId,
     emailSent,
     isCompletingPledge,
     errorMessage,
@@ -116,6 +117,7 @@ export function PledgePage() {
                 <PledgeSuccess
                   participant={participant}
                   pledgeNumber={pledgeNumber}
+                  certificateId={certificateId}
                   emailSent={emailSent}
                   onRestart={restartFlow}
                 />
@@ -126,7 +128,7 @@ export function PledgePage() {
       </main>
 
       {/* Light Theme Editorial Footer */}
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }
