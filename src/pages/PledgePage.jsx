@@ -27,6 +27,10 @@ export function PledgePage({ onNavigate }) {
     participant,
     pledgeNumber,
     certificateId,
+    certificateNumber,
+    certificateDate,
+    officialName,
+    certificateUrl,
     emailSent,
     isCompletingPledge,
     errorMessage,
@@ -118,6 +122,10 @@ export function PledgePage({ onNavigate }) {
                   participant={participant}
                   pledgeNumber={pledgeNumber}
                   certificateId={certificateId}
+                  certificateNumber={certificateNumber}
+                  certificateDate={certificateDate}
+                  officialName={officialName}
+                  certificateUrl={certificateUrl}
                   emailSent={emailSent}
                   onRestart={restartFlow}
                 />

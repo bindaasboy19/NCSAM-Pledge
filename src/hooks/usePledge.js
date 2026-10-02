@@ -50,6 +50,10 @@ export function usePledge() {
   const [emailSent, setEmailSent] = useState(false);
   const [pledgeNumber, setPledgeNumber] = useState(null);
   const [certificateId, setCertificateId] = useState(null);
+  const [certificateNumber, setCertificateNumber] = useState(null);
+  const [certificateDate, setCertificateDate] = useState(null);
+  const [officialName, setOfficialName] = useState(null);
+  const [certificateUrl, setCertificateUrl] = useState(null);
 
   // Status & loaders
   const [isSubmittingDetails, setIsSubmittingDetails] = useState(false);
@@ -150,8 +154,20 @@ export function usePledge() {
       if (response?.pledgeNumber) {
         setPledgeNumber(response.pledgeNumber);
       }
+      if (response?.certificateNumber) {
+        setCertificateNumber(response.certificateNumber);
+      }
       if (response?.certificateId) {
         setCertificateId(response.certificateId);
+      }
+      if (response?.certificateUrl) {
+        setCertificateUrl(response.certificateUrl);
+      }
+      if (response?.date) {
+        setCertificateDate(response.date);
+      }
+      if (response?.officialName) {
+        setOfficialName(response.officialName);
       }
       setEmailSent(Boolean(response?.emailSent));
       // Clear submissionId on success so future submissions generate a fresh ID
@@ -186,6 +202,10 @@ export function usePledge() {
     setParticipantId(null);
     setPledgeNumber(null);
     setCertificateId(null);
+    setCertificateNumber(null);
+    setCertificateDate(null);
+    setOfficialName(null);
+    setCertificateUrl(null);
     setEmailSent(false);
     setErrorMessage(null);
     setErrorCode(null);
@@ -234,6 +254,10 @@ export function usePledge() {
     participantId,
     pledgeNumber,
     certificateId,
+    certificateNumber,
+    certificateDate,
+    officialName,
+    certificateUrl,
     emailSent,
     isSubmittingDetails,
     isCompletingPledge,

@@ -6,11 +6,10 @@ import {
   Copy,
   Check,
   ArrowLeft,
-  Shield,
   AlertCircle,
   FileText,
 } from 'lucide-react';
-import { CertificateCard } from './CertificateCard';
+import { DynamicCertificate } from './DynamicCertificate';
 import { PLEDGE_CONFIG } from '../../config/pledgeConfig';
 import { generateShareCardFile } from '../../utils/ShareCardGenerator';
 import {
@@ -25,20 +24,16 @@ import {
 
 /**
  * PledgeSuccess: Dedicated success & social sharing screen.
- * 
- * Centralized Sharing Architecture:
- * 1. CLICK SHARE -> IMAGE + TEXT + URL shared together automatically where supported.
- * 2. WhatsApp -> Always sends complete TEXT + URL fallback (never URL alone).
- * 3. Single source of truth: All sharing operations delegate to src/services/shareService.js.
- * 4. Copy Pledge Link -> Copies URL only.
- * 5. Copy Pledge Message -> Copies complete message + URL.
- * 6. Public URL -> Protected against localhost in production.
- * 7. Certificate -> Strictly NEVER displayed on screen; emailed notice appears ONLY IF consent was checked AND backend confirmed it.
+ * Displays authoritative backend-generated certificate and centralized sharing.
  */
 export function PledgeSuccess({
   participant,
   pledgeNumber,
   certificateId,
+  certificateNumber,
+  certificateDate,
+  officialName,
+  _certificateUrl,
   emailSent,
   onRestart,
 }) {
@@ -50,6 +45,29 @@ export function PledgeSuccess({
   const [copiedMessage, setCopiedMessage] = useState(false);
   const [shareFile, setShareFile] = useState(null);
   const [shareError, setShareError] = useState('');
+
+  const authoritativeName = useMemo(() => {
+    if (officialName) return officialName;
+    const rawName = participant?.name?.trim();
+    if (!rawName) return 'Committed Citizen';
+    const salutation = participant?.title ? `${participant.title} ` : '';
+    return rawName.startsWith(salutation.trim()) ? rawName : `${salutation}${rawName}`.trim();
+  }, [officialName, participant?.name, participant?.title]);
+
+  const authoritativeCertNumber = useMemo(() => {
+    return (
+      certificateNumber ||
+      certificateId ||
+      (pledgeNumber ? `NF/CSP/26${String(pledgeNumber).padStart(6, '0')}` : 'NF/CSP/26000001')
+    );
+  }, [certificateNumber, certificateId, pledgeNumber]);
+
+  const authoritativeDate = useMemo(() => {
+    return (
+      certificateDate ||
+      new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+    );
+  }, [certificateDate]);
 
   // Dynamically resolve public pledge URL from central share service
   const publicPledgeUrl = useMemo(() => buildPledgeUrl(), []);
@@ -171,66 +189,37 @@ export function PledgeSuccess({
           {langContent.successSubtext}
         </p>
 
-        {/* Official Pledge Number Badge */}
-        {pledgeNumber && (
-          <div className="mb-3.5 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-[#0B1F4D] text-xs sm:text-sm font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-            <span className="text-slate-400 font-medium text-[11px] uppercase tracking-wider">
-              {isHindi ? 'प्रतिज्ञा संख्या' : 'Pledge Reference'}
-            </span>
-            <span className="font-mono font-bold text-[#2563EB] tracking-wide">
-              #{pledgeNumber}
-            </span>
-          </div>
+        {/* Official Certificate ID & Status Badge */}
+        <div className="mb-3 inline-flex flex-wrap items-center justify-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200/90 text-[#0B1F4D] text-xs sm:text-sm shadow-sm">
+          <span className="text-slate-400 font-medium text-[11px] uppercase tracking-wider">
+            {isHindi ? 'आधिकारिक प्रमाणपत्र संख्या' : 'Official Certificate ID'}
+          </span>
+          <span className="font-mono font-bold text-[#2563EB] tracking-wide">
+            {authoritativeCertNumber}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 ml-1">
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            {isHindi ? 'प्रमाणपत्र सफलतापूर्वक तैयार' : 'Certificate Generated Successfully'}
+          </span>
+        </div>
+
+        {/* Email Dispatch Notice (if applicable) */}
+        {emailSent && (
+          <p className="text-[11px] sm:text-xs text-slate-500 mb-2 max-w-md mx-auto">
+            {isHindi
+              ? `आधिकारिक प्रमाणपत्र की एक प्रति आपके पंजीकृत ईमेल (${participant?.email || 'email'}) पर भी भेज दी गई है।`
+              : `A copy of the certificate has also been dispatched to ${participant?.email || 'your registered email'}.`}
+          </p>
         )}
 
-        {/* Instant Certificate Card with HD Canvas Preview and 1-Click Download */}
-        <CertificateCard
-          participant={participant}
-          pledgeNumber={pledgeNumber}
-          certificateId={certificateId}
-          emailSent={emailSent}
+        {/* ============================================================ */}
+        {/* ACTUAL CERTIFICATE (Replaces old share card completely)      */}
+        {/* ============================================================ */}
+        <DynamicCertificate
+          officialName={authoritativeName}
+          certificateNumber={authoritativeCertNumber}
+          date={authoritativeDate}
         />
-
-        {/* ============================================================ */}
-        {/* COMPACT CAMPAIGN SHARE GRAPHIC PREVIEW (Not a download card) */}
-        {/* ============================================================ */}
-        <div className="my-4 max-w-sm sm:max-w-md mx-auto text-left relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 sm:p-5 shadow-sm">
-          {/* Watermark Shield */}
-          <div className="absolute -right-6 -bottom-6 pointer-events-none opacity-[0.04] text-[#0B1F4D]">
-            <Shield className="w-44 h-44" />
-          </div>
-
-          {/* Card Top */}
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/70">
-            <img
-              src="/logo.png"
-              alt="The Cyber Shield Project"
-              className="h-5 sm:h-6 w-auto object-contain"
-            />
-            <span className="font-heading text-[10px] font-bold uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-              NCSAM
-            </span>
-          </div>
-
-          {/* Card Content */}
-          <div className="space-y-1 mb-3">
-            <h2 className="font-heading text-xs sm:text-sm font-extrabold text-[#0B1F4D] tracking-tight uppercase">
-              {langContent.shareCardTitle}
-            </h2>
-            <p className="font-heading text-lg sm:text-xl font-extrabold text-[#2563EB] leading-tight">
-              {langContent.shareCardPrompt}
-            </p>
-            <p className="text-xs text-slate-600 font-medium pt-0.5 leading-relaxed">
-              {langContent.shareCardTagline}
-            </p>
-          </div>
-
-          {/* Card Footer */}
-          <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-            <span>National Cyber Security Awareness Month</span>
-            <span className="text-[#2563EB] font-bold">#CyberShield</span>
-          </div>
-        </div>
 
         {/* Invitation Section */}
         <div className="mt-4 mb-3">

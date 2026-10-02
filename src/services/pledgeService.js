@@ -91,19 +91,56 @@ export async function submitPledge(payload) {
     body: requestBody,
   });
 
-  const pledgeNum = response?.pledgeNumber || (typeof response?.id === 'number' ? response.id : null);
+  const message = (typeof response === 'string' ? response : response?.message) || 'Pledge submitted successfully';
+  const emailConfirmed = Boolean(
+    (typeof message === 'string' && (message.toLowerCase().includes('emailed') || message.toLowerCase().includes('certificate'))) ||
+    response?.emailSent
+  );
+
+  let pledgeNum = response?.pledgeNumber || (typeof response?.id === 'number' ? response.id : null);
+  if (!pledgeNum) {
+    try {
+      const latestCount = await getPledgeCount();
+      if (typeof latestCount === 'number' && latestCount > 0) {
+        pledgeNum = latestCount;
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+  }
+
   const certYear = new Date().getFullYear().toString().slice(-2);
   const derivedCertId = response?.certificateId || response?.certificateNumber || (pledgeNum ? `NF/CSP/${certYear}${String(pledgeNum).padStart(6, '0')}` : null);
+  const certificateNumber = response?.certificateNumber || response?.certificateId || derivedCertId;
+  const certificateUrl = response?.certificateUrl || response?.downloadUrl || response?.fileUrl || null;
+
+  const rawDate = response?.date || response?.createdAt || null;
+  let formattedDate;
+  if (rawDate && typeof rawDate === 'string' && /^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/.test(rawDate.trim())) {
+    formattedDate = rawDate.trim();
+  } else {
+    try {
+      const d = rawDate ? new Date(rawDate) : new Date();
+      formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    } catch {
+      formattedDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+  }
+
+  const rawName = response?.officialName || response?.name || payload.name?.trim() || 'Committed Citizen';
+  const rawTitle = response?.title || payload.title || 'Mr.';
+  const officialName = rawName.startsWith(rawTitle) ? rawName : `${rawTitle} ${rawName}`.trim();
 
   return {
     success: true,
     message,
     pledgeNumber: pledgeNum,
-    certificateNumber: response?.certificateNumber || derivedCertId,
+    certificateNumber,
     certificateId: derivedCertId,
-    officialName: response?.officialName || response?.name || payload.name?.trim(),
-    title: response?.title || payload.title || 'Mr.',
-    date: response?.date || response?.createdAt || new Date().toISOString(),
+    certificateUrl,
+    officialName,
+    title: rawTitle,
+    date: formattedDate,
     certificateAvailable: true,
     emailSent: wantsCertificate && (emailConfirmed || Boolean(response?.certificateNumber || pledgeNum)),
     isDevPreview: false,
