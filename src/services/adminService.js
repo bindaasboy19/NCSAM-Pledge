@@ -156,7 +156,7 @@ export async function getAdminStats() {
   const headers = session?.token ? { Authorization: `Bearer ${session.token}` } : {};
 
   try {
-    const stats = await apiClient('/api/admin/stats', {
+    const stats = await apiClient('/api/admin/pledges', {
       method: 'GET',
       headers,
     });
