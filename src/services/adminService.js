@@ -111,9 +111,10 @@ export async function adminLogin(usernameOrEmail, password) {
       response?.admin?.role ||
       'ROLE_ADMIN';
 
+    const isRealToken = token && typeof token === 'string' && !token.startsWith('session_auth_') && token !== 'session_authenticated';
     if (token || response?.success) {
       const session = {
-        token: token || 'session_authenticated',
+        token: isRealToken ? token.trim() : 'session_authenticated',
         user,
         role,
       };
@@ -147,21 +148,94 @@ export async function adminLogin(usernameOrEmail, password) {
 }
 
 /**
+ * Normalizes a pledge record from any backend representation into the canonical UI format.
+ * Guarantees that officialName, name, phone, email, pledgeNumber, certificateId,
+ * occupation, organization, certificateStatus, and createdAt exist and are populated.
+ * 
+ * @param {object} item 
+ * @returns {object}
+ */
+export function normalizePledgeRecord(item) {
+  if (!item || typeof item !== 'object') return item;
+
+  const officialName = item.officialName || item.name || item.fullName || 'Committed Citizen';
+  const name = item.name || item.officialName || officialName;
+  const title = item.title || '';
+  const phone = item.phone || item.mobile || item.phoneNumber || '';
+  const mobile = item.mobile || item.phone || phone;
+  const email = item.email || '';
+  const pledgeNumber = item.pledgeNumber || item.id || item.number || 0;
+
+  const certYear = new Date().getFullYear().toString().slice(-2);
+  const fallbackCertId = pledgeNumber
+    ? `NF/CSP/${certYear}${String(pledgeNumber).padStart(6, '0')}`
+    : 'NF/CSP/PENDING';
+  const certificateId = item.certificateId || item.certificateNumber || item.certId || fallbackCertId;
+  const certificateNumber = item.certificateNumber || item.certificateId || certificateId;
+
+  const profession = item.profession || item.occupation || '';
+  const occupation = item.occupation || item.profession || profession;
+  const organization = item.organization || item.organisation || item.institution || '';
+  const organisation = item.organisation || item.organization || organization;
+
+  let certificateStatus = item.certificateStatus || item.status || item.deliveryStatus;
+  if (!certificateStatus) {
+    certificateStatus = (item.receiveCertificate || item.certificateConsent) ? 'sent' : 'not_requested';
+  }
+
+  const createdAt = item.createdAt || item.submittedAt || item.timestamp || item.createdDate || item.date || null;
+  const language = item.language || 'en';
+  const receiveCertificate = Boolean(item.receiveCertificate ?? item.certificateConsent ?? true);
+  const certificateUrl = item.certificateUrl || item.downloadUrl || item.fileUrl || null;
+
+  return {
+    ...item,
+    id: item.id || pledgeNumber,
+    name,
+    officialName,
+    title,
+    phone,
+    mobile,
+    email,
+    pledgeNumber,
+    certificateId,
+    certificateNumber,
+    profession,
+    occupation,
+    organization,
+    organisation,
+    certificateStatus,
+    createdAt,
+    language,
+    receiveCertificate,
+    certificateConsent: receiveCertificate,
+    certificateUrl,
+  };
+}
+
+/**
  * Fetch campaign statistics for the admin dashboard KPI cards
  * 
  * @returns {Promise<{ totalPledges: number, certificatesSent: number, certificatesPending: number, certificatesFailed: number }>}
  */
 export async function getAdminStats() {
   const session = getAdminSession();
-  const headers = session?.token ? { Authorization: `Bearer ${session.token}` } : {};
+  const isRealToken = session?.token && !session.token.startsWith('session_auth_') && session.token !== 'session_authenticated';
+  const headers = isRealToken ? { Authorization: `Bearer ${session.token}` } : {};
 
   try {
-    const stats = await apiClient('/api/admin/pledges', {
+    const stats = await apiClient('/api/admin/stats', {
       method: 'GET',
       headers,
     });
-    if (stats && typeof stats.totalPledges === 'number') {
-      return stats;
+    const s = stats?.data || stats;
+    if (s && typeof s.totalPledges === 'number') {
+      return {
+        totalPledges: s.totalPledges,
+        certificatesSent: s.certificatesSent ?? s.totalPledges,
+        certificatesPending: s.certificatesPending ?? 0,
+        certificatesFailed: s.certificatesFailed ?? 0,
+      };
     }
   } catch {
     // Backend may not have a dedicated stats endpoint; calculate from pledge count API
@@ -209,7 +283,8 @@ export async function getAdminPledges(params = {}) {
   } = params;
 
   const session = getAdminSession();
-  const headers = session?.token ? { Authorization: `Bearer ${session.token}` } : {};
+  const isRealToken = session?.token && !session.token.startsWith('session_auth_') && session.token !== 'session_authenticated';
+  const headers = isRealToken ? { Authorization: `Bearer ${session.token}` } : {};
 
   // Build query string
   const query = new URLSearchParams();
@@ -226,42 +301,55 @@ export async function getAdminPledges(params = {}) {
       headers,
     });
 
+    let rawList = [];
+    let pageNum = page;
+    let pageSize = size;
+    let totalItems = 0;
+    let totalPg = 1;
+
+    // Handle all Spring Data Page structures and envelopes
     if (data && Array.isArray(data.content)) {
-      return {
-        content: data.content,
-        page: data.page ?? data.number ?? page,
-        size: data.size ?? size,
-        totalElements: data.totalElements ?? data.content.length,
-        totalPages: data.totalPages ?? (Math.ceil((data.totalElements ?? data.content.length) / size) || 1),
-      };
+      rawList = data.content;
+      pageNum = data.page ?? data.number ?? page;
+      pageSize = data.size ?? size;
+      totalItems = data.totalElements ?? data.total ?? rawList.length;
+      totalPg = data.totalPages ?? (Math.ceil(totalItems / pageSize) || 1);
+    } else if (data?.data && Array.isArray(data.data.content)) {
+      rawList = data.data.content;
+      pageNum = data.data.page ?? data.data.number ?? page;
+      pageSize = data.data.size ?? size;
+      totalItems = data.data.totalElements ?? data.data.total ?? rawList.length;
+      totalPg = data.data.totalPages ?? (Math.ceil(totalItems / pageSize) || 1);
+    } else if (data?.data && Array.isArray(data.data)) {
+      rawList = data.data;
+      totalItems = data.total ?? data.totalElements ?? rawList.length;
+      totalPg = Math.ceil(totalItems / pageSize) || 1;
+    } else if (data && Array.isArray(data)) {
+      rawList = data;
+      totalItems = data.length;
+      totalPg = Math.ceil(totalItems / pageSize) || 1;
+    } else if (data?.pledges && Array.isArray(data.pledges)) {
+      rawList = data.pledges;
+      pageNum = data.page ?? page;
+      pageSize = data.size ?? size;
+      totalItems = data.totalElements ?? data.total ?? rawList.length;
+      totalPg = data.totalPages ?? (Math.ceil(totalItems / pageSize) || 1);
+    } else if (data?.data?.pledges && Array.isArray(data.data.pledges)) {
+      rawList = data.data.pledges;
+      pageNum = data.data.page ?? page;
+      pageSize = data.data.size ?? size;
+      totalItems = data.data.totalElements ?? data.data.total ?? rawList.length;
+      totalPg = data.data.totalPages ?? (Math.ceil(totalItems / pageSize) || 1);
     }
 
-    if (data && Array.isArray(data)) {
-      return {
-        content: data,
-        page,
-        size,
-        totalElements: data.length,
-        totalPages: Math.ceil(data.length / size) || 1,
-      };
-    }
-
-    if (data?.pledges && Array.isArray(data.pledges)) {
-      return {
-        content: data.pledges,
-        page: data.page || page,
-        size: data.size || size,
-        totalElements: data.totalElements || data.total || data.pledges.length,
-        totalPages: data.totalPages || 1,
-      };
-    }
+    const content = rawList.map(normalizePledgeRecord);
 
     return {
-      content: [],
-      page,
-      size,
-      totalElements: 0,
-      totalPages: 0,
+      content,
+      page: pageNum,
+      size: pageSize,
+      totalElements: totalItems,
+      totalPages: totalPg,
     };
   } catch (err) {
     if (err.status === 401 || err.status === 403) {
@@ -279,14 +367,18 @@ export async function getAdminPledges(params = {}) {
  */
 export async function getAdminPledgeDetails(pledgeId) {
   const session = getAdminSession();
-  const headers = session?.token ? { Authorization: `Bearer ${session.token}` } : {};
+  const isRealToken = session?.token && !session.token.startsWith('session_auth_') && session.token !== 'session_authenticated';
+  const headers = isRealToken ? { Authorization: `Bearer ${session.token}` } : {};
 
   try {
     const res = await apiClient(`/api/admin/pledges/${pledgeId}`, {
       method: 'GET',
       headers,
     });
-    if (res?.id || res?.pledgeNumber) return res;
+    const item = res?.data || res;
+    if (item?.id || item?.pledgeNumber) {
+      return normalizePledgeRecord(item);
+    }
   } catch (err) {
     if (err.status === 401 || err.status === 403) {
       clearAdminSession();

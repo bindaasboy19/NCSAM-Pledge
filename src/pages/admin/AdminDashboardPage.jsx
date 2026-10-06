@@ -397,6 +397,24 @@ export function AdminDashboardPage({ onNavigate }) {
                       </div>
                     </td>
                   </tr>
+                ) : errorMsg ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2 max-w-md mx-auto">
+                        <AlertCircle className="w-8 h-8 text-rose-500 mb-1" />
+                        <span className="font-semibold text-sm text-rose-700">Failed to load pledge records</span>
+                        <span className="text-xs text-slate-500">{errorMsg}</span>
+                        <button
+                          type="button"
+                          onClick={() => loadPledges()}
+                          className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-xs font-semibold transition-colors"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Try Again</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : pledges.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400">
@@ -433,11 +451,11 @@ export function AdminDashboardPage({ onNavigate }) {
                         {/* Name & Title */}
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-[#0B1F4D]">
-                            {p.title ? `${p.title} ` : ''}{p.name}
+                            {p.title ? `${p.title} ` : ''}{p.officialName || p.name}
                           </div>
-                          {p.organization && (
+                          {(p.organization || p.organisation) && (
                             <div className="text-[11px] text-slate-400 truncate max-w-[180px]">
-                              {p.organization}
+                              {p.organization || p.organisation}
                             </div>
                           )}
                         </td>
@@ -445,16 +463,16 @@ export function AdminDashboardPage({ onNavigate }) {
                         {/* Contact */}
                         <td className="py-3.5 px-4">
                           <div className="text-slate-800 truncate max-w-[200px]">
-                            {p.email}
+                            {p.email || 'N/A'}
                           </div>
                           <div className="text-[11px] text-slate-400 font-mono">
-                            {p.phone}
+                            {p.phone || p.mobile || 'N/A'}
                           </div>
                         </td>
 
                         {/* Certificate ID */}
                         <td className="py-3.5 px-4 font-mono text-xs font-semibold text-slate-600">
-                          {p.certificateId || 'Pending'}
+                          {p.certificateId || p.certificateNumber || 'Pending'}
                         </td>
 
                         {/* Status */}

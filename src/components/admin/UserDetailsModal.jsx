@@ -167,7 +167,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
               Official Name & Salutation
             </span>
             <span className="text-sm font-bold text-[#0B1F4D]">
-              {pledge.title ? `${pledge.title} ` : ''}{pledge.name}
+              {pledge.title ? `${pledge.title} ` : ''}{pledge.officialName || pledge.name}
             </span>
           </div>
 
@@ -200,7 +200,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
               </span>
               <button
                 type="button"
-                onClick={() => copyToClipboard(pledge.phone, 'phone')}
+                onClick={() => copyToClipboard(pledge.phone || pledge.mobile, 'phone')}
                 className="text-slate-400 hover:text-[#2563EB] transition-colors p-0.5"
                 title="Copy phone number"
               >
@@ -209,7 +209,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
             </div>
             <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
               <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>{pledge.phone || 'N/A'}</span>
+              <span>{pledge.phone || pledge.mobile || 'N/A'}</span>
             </div>
           </div>
 
@@ -230,7 +230,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
             </span>
             <div className="flex items-center gap-1.5 text-sm text-slate-700">
               <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>{pledge.profession || 'Not Specified'}</span>
+              <span>{pledge.profession || pledge.occupation || 'Not Specified'}</span>
             </div>
           </div>
 
@@ -241,7 +241,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
             </span>
             <div className="flex items-center gap-1.5 text-sm text-slate-700">
               <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>{pledge.organization || 'Not Specified'}</span>
+              <span>{pledge.organization || pledge.organisation || 'Not Specified'}</span>
             </div>
           </div>
 
@@ -253,7 +253,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
               </span>
               <button
                 type="button"
-                onClick={() => copyToClipboard(pledge.certificateId, 'certId')}
+                onClick={() => copyToClipboard(pledge.certificateId || pledge.certificateNumber, 'certId')}
                 className="text-slate-400 hover:text-[#2563EB] transition-colors p-0.5"
                 title="Copy certificate ID"
               >
@@ -262,7 +262,7 @@ export function UserDetailsModal({ isOpen, onClose, pledge }) {
             </div>
             <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#2563EB]">
               <Award className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
-              <span>{pledge.certificateId || 'NF/CSP/PENDING'}</span>
+              <span>{pledge.certificateId || pledge.certificateNumber || 'NF/CSP/PENDING'}</span>
             </div>
           </div>
 
