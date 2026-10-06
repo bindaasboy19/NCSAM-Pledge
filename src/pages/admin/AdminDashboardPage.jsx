@@ -383,7 +383,6 @@ export function AdminDashboardPage({ onNavigate }) {
                   <th className="py-3 px-4">Email & Phone</th>
                   <th className="py-3 px-4">Certificate ID</th>
                   <th className="py-3 px-4">Delivery Status</th>
-                  <th className="py-3 px-4">Recorded Date</th>
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>
