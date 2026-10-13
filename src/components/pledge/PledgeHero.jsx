@@ -63,7 +63,15 @@ export function PledgeHero({ onStart }) {
             {/* Campaign Category Pill */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-bold tracking-widest uppercase mb-5 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-[#EC4899] animate-pulse" />
-              <span className="font-heading">{campaign.fullName}</span>
+              
+              <a 
+                href="https://ncsam.in" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-heading hover:underline"
+        >
+                <span className="font-heading">{campaign.fullName}</span>
+            </a>
             </div>
 
             {/* Display Headline */}
