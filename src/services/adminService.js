@@ -296,7 +296,7 @@ export async function getAdminPledges(params = {}) {
   if (language !== 'all') query.set('language', language);
 
   try {
-    const data = await apiClient(`/api/admin/pledges?${query.toString()}`, {
+    const data = await apiClient(`/api/admin/pledges`, {
       method: 'GET',
       headers,
     });
