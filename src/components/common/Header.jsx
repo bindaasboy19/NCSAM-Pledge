@@ -78,18 +78,23 @@ export function Header({ currentStage, onReset, isDevPreview }) {
             </span>
           )}
 
-          <div className="flex items-center gap-3">
-            <a
-              href="https://ncsam.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-s font-medium hover:text-[#050505] transition-colors px-2.5 py-1.5 bg-pink-50 text-pink-700 border border-pink-200 rounded-full hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
-              title="NCSAM Campaign Website"
-              aria-label="Visit NCSAM Campaign Website"
-           >
+         <div className="flex items-center gap-3">
+  <a
+    href="https://ncsam.in"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-1.5 text-xs font-medium hover:text-[#050505] transition-colors px-3 py-1.5 bg-pink-50 text-pink-700 border border-pink-200 rounded-full hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 whitespace-nowrap"
+    title="NCSAM Campaign Website"
+    aria-label="Visit NCSAM Campaign Website"
+  >
+    {/* Mobile view mein sirf NCSAM dikhega */}
+    <span className="sm:hidden">NCSAM</span>
+    
+    {/* Badi screens par poora naam dikhega */}
     <span className="hidden sm:inline">NCSAM Campaign</span>
   </a>
 </div>
+
 
           {/* Real Backend-Fed Pledge Counter (Replaces static "NCSAM Campaign" badge) */}
           {pledgeCount !== null ? (

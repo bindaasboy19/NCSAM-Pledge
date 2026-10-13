@@ -77,6 +77,7 @@ export function Footer({ onNavigate }) {
              title="NCSAM Campaign Website"
              aria-label="Visit NCSAM Campaign Website"
           >
+            <span className="sm:hidden">NCSAM Campaign</span>
     <span className="hidden sm:inline">NCSAM Campaign</span>
   </a>
 </div>
