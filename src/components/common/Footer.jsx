@@ -20,11 +20,17 @@ export function Footer({ onNavigate }) {
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
         {/* Logo and campaign identity */}
         <div className="flex flex-col items-center md:items-start gap-2.5">
-          <img
-            src="/logo.png"
-            alt={`${campaign.initiativeName} - ${campaign.initiativeSubtitle}`}
-            className="h-14 w-auto object-contain"
-          />
+          <a
+            href="https://naksh.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="/logo.png"
+              alt={`${campaign.initiativeName} - ${campaign.initiativeSubtitle}`}
+              className="h-14 w-auto object-contain"
+            />
+          </a>
           <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
             {campaign.fullName} (NCSAM) initiative dedicated to advancing digital vigilance,
             privacy protection, and cyber safety practices for everyone.
@@ -62,7 +68,19 @@ export function Footer({ onNavigate }) {
             <span>Contact & Support</span>
             <ExternalLink className="w-3 h-3 text-slate-400" />
           </a>
-          <span className="text-slate-300" aria-hidden="true">•</span>
+          <div className="flex items-center gap-3">
+          <a
+             href="https://ncsam.in"
+             target="_blank"
+             rel="noopener noreferrer"
+             className="inline-flex items-center gap-1.5 text-xs font-medium hover:text-[#2563EB] transition-colors px-2.5 py-1.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+             title="NCSAM Campaign Website"
+             aria-label="Visit NCSAM Campaign Website"
+          >
+    <span className="hidden sm:inline">NCSAM Campaign</span>
+  </a>
+</div>
+          <span className="text-slate-8000" aria-hidden="true">•</span>
           <button
             type="button"
             onClick={() => {
@@ -73,7 +91,7 @@ export function Footer({ onNavigate }) {
                 window.location.pathname = target;
               }
             }}
-            className="hover:text-[#2563EB] transition-colors inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+            className="hover:text-[#2563EB] transition-colors inline-flex items-center gap-1 text-slate-400 hover:text-slate-8000"
             title="Administrator Portal"
           >
             <span>Admin Portal</span>
@@ -84,7 +102,14 @@ export function Footer({ onNavigate }) {
         <div className="flex flex-col items-center md:items-end gap-1 text-xs text-slate-500">
           <div className="flex items-center gap-1.5 text-[#0B1F4D] font-semibold">
             <Shield className="w-3.5 h-3.5 text-[#2563EB]" aria-hidden="true" />
-            <span>{campaign.initiativeName}</span>
+          <a
+             href="https://projectcybershield.in"
+             target="_blank"
+             rel="noopener noreferrer"
+             className="hover:text-[#2563EB] transition-colors"
+          >
+            {campaign.initiativeName}
+          </a>
           </div>
           <p className="text-[11px] text-slate-500">{campaign.initiativeSubtitle}</p>
           <p className="text-[11px] text-slate-400 mt-1">© {currentYear} NCSAM Initiative. All rights reserved.</p>

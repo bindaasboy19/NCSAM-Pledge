@@ -55,7 +55,7 @@ export function Header({ currentStage, onReset, isDevPreview }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
         {/* Provided Logo Link */}
         <a
-          href="#top"
+          href= "https://ncsam.in" 
           className="flex items-center gap-0 focus-visible-ring rounded-lg p-0"
           aria-label="NCSAM Cyber Safety Pledge Home"
         >
@@ -77,6 +77,19 @@ export function Header({ currentStage, onReset, isDevPreview }) {
               Dev Mode
             </span>
           )}
+
+          <div className="flex items-center gap-3">
+            <a
+              href="https://ncsam.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-s font-medium hover:text-[#050505] transition-colors px-2.5 py-1.5 bg-pink-50 text-pink-700 border border-pink-200 rounded-full hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+              title="NCSAM Campaign Website"
+              aria-label="Visit NCSAM Campaign Website"
+           >
+    <span className="hidden sm:inline">NCSAM Campaign</span>
+  </a>
+</div>
 
           {/* Real Backend-Fed Pledge Counter (Replaces static "NCSAM Campaign" badge) */}
           {pledgeCount !== null ? (
