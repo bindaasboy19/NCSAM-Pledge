@@ -85,7 +85,7 @@ export function Header({ currentStage, onReset, isDevPreview }) {
     href="https://ncsam.in"
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-1.5 text-s font-medium hover:text-[#050505] rounded-full transition-colors px-3 py-1.5 bg-pink-50 text-pink-700 border border-pink-200  hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 whitespace-nowrap"
+    className="inline-flex items-center gap-1.5 text-xs font-medium hover:text-[#050505] rounded-full transition-colors px-3 py-1.5 bg-pink-50 text-pink-700 border border-pink-200  hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 whitespace-nowrap"
     title="NCSAM Campaign Website"
     aria-label="Visit NCSAM Campaign Website"
   >
