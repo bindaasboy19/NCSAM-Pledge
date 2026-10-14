@@ -94,7 +94,7 @@ export function Header({ currentStage, onReset, isDevPreview }) {
     
     {/* Badi screens par poora naam dikhega */}
     <span className="hidden sm:inline">NCSAM Campaign</span>
-    <ExternalLink className="w-4 h-4 " />
+    <ExternalLink className="w-3 h-3 " />
   </a>
 </div>
 
