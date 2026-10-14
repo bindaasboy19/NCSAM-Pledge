@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, RotateCcw } from 'lucide-react';
+import { Shield, RotateCcw, ExternalLink } from 'lucide-react';
 import { getPledgeCount } from '../../services/pledgeService';
+
+
 
 /**
  * Minimalist, elegant light-theme header.
@@ -83,7 +85,7 @@ export function Header({ currentStage, onReset, isDevPreview }) {
     href="https://ncsam.in"
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-1.5 text-xs font-medium hover:text-[#050505] transition-colors px-3 py-1.5 bg-pink-50 text-pink-700 border border-pink-200 rounded-full hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 whitespace-nowrap"
+    className="inline-flex items-center gap-1.5 text-s font-medium hover:text-[#050505] rounded-full transition-colors px-3 py-1.5 bg-pink-50 text-pink-700 border border-pink-200  hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 whitespace-nowrap"
     title="NCSAM Campaign Website"
     aria-label="Visit NCSAM Campaign Website"
   >
@@ -92,6 +94,7 @@ export function Header({ currentStage, onReset, isDevPreview }) {
     
     {/* Badi screens par poora naam dikhega */}
     <span className="hidden sm:inline">NCSAM Campaign</span>
+    <ExternalLink className="w-3 h-3 text-slate-400" />
   </a>
 </div>
 

@@ -79,6 +79,7 @@ export function Footer({ onNavigate }) {
           >
             <span className="sm:hidden">NCSAM Campaign</span>
     <span className="hidden sm:inline">NCSAM Campaign</span>
+    <ExternalLink className="w-3 h-3 text-slate-400" />
   </a>
 </div>
           <span className="text-slate-8000" aria-hidden="true">•</span>
