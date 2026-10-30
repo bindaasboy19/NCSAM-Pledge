@@ -935,8 +935,9 @@ export function AdminDashboardPage({ onNavigate }) {
 
 
                         {/* Date */}
-
-                       
+                        <td className="py-3.5 px-4 text-slate-500 text-xs">
+                          {recDate || 'N/A'}
+                        </td>
 
 
                         {/* Action */}

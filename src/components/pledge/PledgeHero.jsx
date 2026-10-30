@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Shield, Lock, Users } from 'lucide-react';
 import { PLEDGE_CONFIG } from '../../config/pledgeConfig';
 import { getPledgeCount } from '../../services/pledgeService';
+import { YouTubeBackgroundVideo } from './YouTubeBackgroundVideo';
 
 /**
  * Editorial Light-Theme Campaign Hero for National Cyber Security Awareness Month.
  * Inspired by reference cinematic hero composition:
- * - Large rounded visual container with muted looping background video
+ * - Large rounded visual container with muted looping background video hosted on YouTube
  * - High-contrast translucent overlay for optimal typography legibility
  * - Prominent elevated 'TAKE THE PLEDGE' CTA
  * - Live backend pledge counter pill
@@ -38,19 +39,8 @@ export function PledgeHero({ onStart }) {
         {/* CINEMATIC VIDEO HERO CONTAINER                               */}
         {/* ============================================================ */}
         <div className="w-full rounded-2xl sm:rounded-3xl md:rounded-[32px] overflow-hidden shadow-xl sm:shadow-2xl relative min-h-[580px] sm:min-h-[630px] md:min-h-[700px] flex items-center justify-center p-6 sm:p-10 md:p-16 border border-slate-200/80 bg-[#0B1F4D]">
-          {/* Background Video */}
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            className="absolute inset-0 w-full h-full object-cover z-0 filter brightness-[1] contrast-[1.05]"
-          >
-            <source src="/Video.mp4" type="video/mp4" />
-            <source src="/video.mp4" type="video/mp4" />
-
-          </video>
+          {/* YouTube Background Video (Replaces direct CDN MP4 serving) */}
+          <YouTubeBackgroundVideo videoId={campaign.heroYoutubeVideoId} />
 
           {/* Cinematic Translucent Gradient Overlay for Legibility */}
           <div

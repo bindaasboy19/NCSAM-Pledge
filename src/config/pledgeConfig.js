@@ -19,6 +19,9 @@ export const PLEDGE_CONFIG = {
     heroSubtext: "This Cybersecurity Month, Pledge to Protect Yourself and Others Online.",
     heroSupportingText: "Join thousands across India taking a proactive stand against cyber threats, digital fraud, and online exploitation.",
     primaryCta: "TAKE THE PLEDGE",
+    heroYoutubeVideoId:
+      import.meta.env.VITE_HERO_YOUTUBE_VIDEO_ID ||
+      "0NUhZZ_y6_c", // Default YouTube Video ID (can be overridden via VITE_HERO_YOUTUBE_VIDEO_ID or pledgeConfig)
   },
 
   // Title Options for Step 1
